@@ -28,14 +28,14 @@ BEGIN
 
 	INSERT INTO rental_hold_summary
 	SELECT 
-	  c.customer_id, 
-	  c.first_name, 
-	  c.last_name, 
-	  c.email,
-	  AVG(l.days_held) as average_days_held 
-	FROM customer AS c 
-	JOIN hold_ledger AS l ON c.customer_id = l.customer_id
-	GROUP BY c.customer_id, c.first_name, c.last_name, c.email;
+	  customer_id, 
+	  first_name, 
+	  last_name, 
+	  email,
+	  AVG(days_held) as average_days_held 
+	FROM rental_hold_detail
+	WHERE days_held >= 0
+	GROUP BY customer_id, first_name, last_name, email;
 	RETURN NULL;
 END; $function$
 ;
