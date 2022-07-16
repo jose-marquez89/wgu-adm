@@ -1,3 +1,8 @@
+/*
+    This procedure should be run daily for analytics to reflect sales
+    from the previous business day.
+*/
+
 CREATE OR REPLACE PROCEDURE public.update_revenue_tables()
  LANGUAGE sql
 AS $procedure$
