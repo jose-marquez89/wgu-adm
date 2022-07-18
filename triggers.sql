@@ -1,47 +1,36 @@
-CREATE OR REPLACE FUNCTION public.update_hold_tables()
+CREATE OR REPLACE FUNCTION update_hold_summary()
  RETURNS trigger
  LANGUAGE plpgsql
-AS $function$
+AS $$
+DECLARE new_average REAL;
+DECLARE summary_customer_id INT;
 BEGIN
-	DELETE FROM rental_hold_detail;
-	DELETE FROM rental_hold_summary;
 	
-	WITH hold_ledger AS (
-	  SELECT 
-	    customer_id, 
-	    rental_date, 
-	    return_date, 
-	    days_held(rental_date, return_date) AS days_held 
-	  FROM rental 
-	)
-    
-	INSERT INTO rental_hold_detail
-	SELECT 
-	  c.customer_id, 
-	  c.first_name, 
-	  c.last_name, 
-	  c.email, 
-	  DATE(l.rental_date) AS date_rented, 
-	  l.days_held 
-	FROM customer AS c 
-	JOIN hold_ledger AS l ON c.customer_id = l.customer_id;
+	SELECT customer_id
+	INTO summary_customer_id
+	FROM rental_hold_summary
+	WHERE customer_id = NEW.customer_id;
 
-	INSERT INTO rental_hold_summary
-	SELECT 
-	  customer_id, 
-	  first_name, 
-	  last_name, 
-	  email,
-	  AVG(days_held) as average_days_held 
-	FROM rental_hold_detail
-	WHERE days_held >= 0
-	GROUP BY customer_id, first_name, last_name, email;
+	IF summary_customer_id IS NULL THEN
+		INSERT INTO rental_hold_summary
+			(customer_id, first_name, last_name, email, average_days_held)
+		VALUES 
+			(NEW.customer_id, NEW.first_name, NEW.last_name, NEW.email, NEW.days_held);
+	ELSE
+		SELECT AVG(days_held)
+		INTO new_average
+		FROM rental_hold_detail
+		WHERE customer_id = NEW.customer_id;
+		
+		UPDATE rental_hold_summary
+		SET average_days_held = new_average
+		WHERE customer_id = NEW.customer_id;
+	END IF;
 	RETURN NULL;
-END; $function$
-;
+END; $$;
 
 -- Statement to create trigger
-CREATE TRIGGER update_rental_on_return
-AFTER UPDATE ON rental
-FOR EACH STATEMENT
-EXECUTE PROCEDURE update_hold_tables(); 
+CREATE TRIGGER hold_summary_update
+AFTER INSERT ON rental_hold_detail
+FOR EACH ROW
+EXECUTE PROCEDURE update_hold_summary();
