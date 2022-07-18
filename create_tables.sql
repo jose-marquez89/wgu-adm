@@ -21,7 +21,8 @@ CREATE TABLE rental_hold_detail (
   days_held INT 
  );
 
-CREATE TABLE rental_hold_summary customer_id INT, 
+CREATE TABLE rental_hold_summary (
+  customer_id INT, 
   first_name VARCHAR(45), 
   last_name VARCHAR(45), 
   email VARCHAR(50), 
