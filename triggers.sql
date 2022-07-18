@@ -20,7 +20,8 @@ BEGIN
 		SELECT AVG(days_held)
 		INTO new_average
 		FROM rental_hold_detail
-		WHERE customer_id = NEW.customer_id;
+		WHERE customer_id = NEW.customer_id
+			AND days_held >= 0;
 		
 		UPDATE rental_hold_summary
 		SET average_days_held = new_average
